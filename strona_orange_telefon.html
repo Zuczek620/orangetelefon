@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orange – Odkryj świat połączeń!</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Baloo+2:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+
+  :root {
+    --orange: #FF6600;
+    --orange-light: #FF8533;
+    --orange-dark: #CC5200;
+    --orange-glow: rgba(255,102,0,0.18);
+    --bg: #0f0f0f;
+    --bg2: #181818;
+    --bg3: #222222;
+    --bg4: #2a2a2a;
+    --border: rgba(255,255,255,0.08);
+    --border-orange: rgba(255,102,0,0.35);
+    --text: #e8e8e8;
+    --text2: #aaaaaa;
+    --text3: #666666;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(255,102,0,0.12) 0%, transparent 70%), var(--bg);
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,102,0,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,102,0,0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,102,0,0.15), transparent 70%);
+    animation: float 7s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .b1 { width: 320px; height: 320px; top: -100px; left: -100px; animation-delay: 0s; }
+  .b2 { width: 200px; height: 200px; bottom: 0px; right: -60px; animation-delay: 2s; }
+  .b3 { width: 100px; height: 100px; top: 35%; right: 8%; animation-delay: 4s; }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-22px); }
+  }
+  #hero-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    animation: popIn 0.7s cubic-bezier(.34,1.56,.64,1);
+    position: relative; z-index: 1;
+  }
+  #hero-logo-img {
+    width: clamp(80px, 14vw, 130px);
+    height: clamp(80px, 14vw, 130px);
+    border-radius: 20px;
+    object-fit: cover;
+    box-shadow: 0 0 40px rgba(255,102,0,0.5);
+  }
+  #hero-logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(64px, 12vw, 120px);
+    font-weight: 800;
+    color: var(--orange);
+    letter-spacing: -2px;
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(255,102,0,0.5), 0 0 120px rgba(255,102,0,0.2);
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  #hero-sub {
+    font-size: clamp(16px, 3.5vw, 26px);
+    font-weight: 700;
+    color: var(--text);
+    margin: 14px 0 8px;
+    animation: fadeUp 0.6s 0.25s both ease-out;
+    position: relative; z-index: 1;
+  }
+  #hero-desc {
+    font-size: clamp(13px, 2vw, 16px);
+    color: var(--text2);
+    max-width: 480px;
+    line-height: 1.7;
+    animation: fadeUp 0.6s 0.45s both ease-out;
+    position: relative; z-index: 1;
+  }
+  @keyframes fadeUp {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  #scroll-hint {
+    margin-top: 2.5rem;
+    animation: fadeUp 0.6s 0.65s both ease-out;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    position: relative; z-index: 1;
+  }
+  #scroll-hint span { color: var(--text3); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .arrow-down {
+    width: 24px; height: 24px;
+    border-right: 2px solid var(--orange);
+    border-bottom: 2px solid var(--orange);
+    transform: rotate(45deg);
+    animation: bounce 1.6s infinite;
+  }
+  @keyframes bounce { 0%,100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(7px); } }
+
+
+  /* NAV - mobile scrollable */
+  .nav-wrapper {
+    position: sticky; top: 0; z-index: 1000;
+    display: flex; align-items: stretch;
+    background: rgba(15,15,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-orange);
+  }
+  nav {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex: 1;
+    padding: 0 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    padding: 12px 13px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .nav-btn:hover, .nav-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+  .nav-arrow {
+    width: 28px; flex-shrink: 0;
+    background: rgba(15,15,15,0.95);
+    border: none;
+    color: var(--orange);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .nav-arrow-right { transform: scaleX(-1); }
+  body.light-mode .nav-wrapper { background: rgba(255,255,255,0.95); }
+  body.light-mode .nav-arrow { background: rgba(255,255,255,0.97); }
+
+  /* SECTIONS */
+  .page-section { display: none; padding: 3rem 1rem 5rem; max-width: 700px; margin: 0 auto; }
+  .page-section.active { display: block; }
+  .section-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(26px, 5vw, 40px);
+    font-weight: 800;
+    color: var(--orange);
+    margin-bottom: 4px;
+    text-shadow: 0 0 30px rgba(255,102,0,0.3);
+  }
+  .section-sub { font-size: 15px; color: var(--text3); margin-bottom: 2rem; }
+
+  /* CIEKAWOSTKI */
+  .fact-grid { display: grid; gap: 14px; }
+  .fact-card {
+    touch-action: manipulation;
+    background: var(--bg2);
+    border-radius: 18px;
+    padding: 18px;
+    display: flex; gap: 14px; align-items: flex-start;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .fact-card:hover { border-color: var(--border-orange); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(255,102,0,0.12); }
+  .fact-card.open { border-color: var(--orange); background: rgba(255,102,0,0.06); box-shadow: 0 0 0 1px rgba(255,102,0,0.2), 0 8px 32px rgba(255,102,0,0.1); }
+  .fact-icon {
+    font-size: 30px;
+    width: 52px; height: 52px; flex-shrink: 0;
+    background: var(--bg3);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .fact-card.open .fact-icon { background: rgba(255,102,0,0.15); border-color: var(--border-orange); }
+  .fact-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .fact-teaser { font-size: 13px; color: var(--text3); }
+  .fact-reveal {
+    display: none; margin-top: 10px;
+    font-size: 13px; color: var(--text2);
+    background: var(--bg3);
+    border-radius: 10px; padding: 12px 14px;
+    border-left: 3px solid var(--orange);
+    line-height: 1.7;
+    animation: slideDown 0.25s ease-out;
+  }
+  .fact-reveal strong { color: var(--orange); }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .fact-card.open .fact-reveal { display: block; }
+  .tap-hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  /* QUIZ */
+  #quiz-wrap {
+    background: var(--bg2);
+    border-radius: 22px;
+    padding: 1.75rem;
+    border: 1px solid var(--border);
+  }
+  #q-progress-bar {
+    background: var(--bg3); border-radius: 99px; height: 6px;
+    margin-bottom: 1.5rem; overflow: hidden;
+  }
+  #q-progress-fill {
+    height: 100%; background: var(--orange);
+    border-radius: 99px; transition: width 0.4s ease;
+    box-shadow: 0 0 8px rgba(255,102,0,0.6);
+  }
+  #q-num { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  #q-text { font-family: 'Baloo 2', cursive; font-size: clamp(17px, 3.5vw, 22px); font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 1.25rem; }
+  #q-options { display: grid; gap: 9px; }
+  .qopt {
+    width: 100%; padding: 13px 16px; text-align: left;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg3);
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600;
+    color: var(--text); cursor: pointer;
+    transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .qopt:hover:not(:disabled) { border-color: var(--border-orange); background: rgba(255,102,0,0.08); transform: scale(1.01); }
+  .qopt.correct { border-color: #22c55e; background: rgba(34,197,94,0.1); color: #86efac; }
+  .qopt.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #fca5a5; }
+  #q-feedback { min-height: 22px; font-size: 13px; font-weight: 700; margin: 12px 0 0; }
+  #q-next-btn {
+    margin-top: 14px; padding: 13px 28px;
+    background: var(--orange); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(255,102,0,0.35);
+  }
+  #q-next-btn:hover { background: var(--orange-light); transform: scale(1.04); }
+  #quiz-result { text-align: center; padding: 1rem 0; display: none; }
+  .result-emoji { font-size: 68px; margin-bottom: 12px; animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1); }
+  .result-title { font-family: 'Baloo 2', cursive; font-size: 26px; font-weight: 800; color: var(--orange); margin-bottom: 6px; text-shadow: 0 0 20px rgba(255,102,0,0.4); }
+  .result-desc { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+  #q-restart {
+    padding: 13px 32px; background: var(--orange); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(255,102,0,0.35);
+  }
+  #q-restart:hover { background: var(--orange-light); transform: scale(1.04); }
+
+  /* GRA */
+  #game-wrap {
+    background: var(--bg2);
+    border-radius: 22px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+  }
+  #game-hud {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .hud-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 18px; text-align: center;
+  }
+  .hud-label { font-size: 10px; font-weight: 700; color: var(--orange); text-transform: uppercase; letter-spacing: 1.5px; }
+  .hud-val { font-family: 'Baloo 2', cursive; font-size: 26px; font-weight: 800; color: var(--orange); line-height: 1; text-shadow: 0 0 12px rgba(255,102,0,0.5); }
+  #game-canvas-wrap {
+    background: var(--bg);
+    border-radius: 14px; overflow: hidden; position: relative;
+    border: 1px solid var(--border-orange);
+  }
+  canvas { display: block; width: 100%; height: auto; touch-action: none; cursor: none; }
+  #game-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(10,10,10,0.88);
+    backdrop-filter: blur(4px);
+    border-radius: 13px;
+  }
+  #game-overlay-title { font-family: 'Baloo 2', cursive; font-size: 24px; font-weight: 800; color: var(--orange); margin-bottom: 8px; text-shadow: 0 0 20px rgba(255,102,0,0.5); }
+  #game-overlay-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; text-align: center; max-width: 260px; padding: 0 1rem; }
+  #game-play-btn {
+    padding: 13px 34px; background: var(--orange); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 0 24px rgba(255,102,0,0.5);
+  }
+  #game-play-btn:hover { transform: scale(1.08); box-shadow: 0 0 36px rgba(255,102,0,0.7); }
+
+
+  /* CONTACT BLOCK */
+  .contact-block {
+    margin-top: 2.5rem;
+    background: var(--bg2);
+    border: 1px solid var(--border-orange);
+    border-radius: 18px;
+    padding: 1.25rem 1.5rem;
+  }
+  .contact-block h3 {
+    font-family: 'Baloo 2', cursive;
+    font-size: 18px; font-weight: 800;
+    color: var(--orange); margin-bottom: 1rem;
+    text-shadow: 0 0 16px rgba(255,102,0,0.3);
+  }
+  .contact-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px; color: var(--text2);
+  }
+  .contact-row:last-child { border-bottom: none; }
+  .contact-icon { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+  .contact-row a { color: var(--orange); text-decoration: none; font-weight: 700; }
+  .contact-row a:hover { text-decoration: underline; }
+
+  /* OFERTY */
+  .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin-bottom: 1.5rem; }
+  .plan-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 18px; padding: 1.25rem; text-align: center;
+    transition: all 0.2s;
+  }
+  .plan-card:hover { border-color: var(--border-orange); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(255,102,0,0.12); }
+  .plan-card.featured { border-color: var(--orange); box-shadow: 0 0 0 1px rgba(255,102,0,0.3), 0 8px 24px rgba(255,102,0,0.15); }
+  .plan-badge { display: inline-block; background: var(--orange); color: white; font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 99px; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .plan-name { font-family: 'Baloo 2', cursive; font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .plan-price { font-family: 'Baloo 2', cursive; font-size: 32px; font-weight: 800; color: var(--orange); line-height: 1; text-shadow: 0 0 16px rgba(255,102,0,0.4); }
+  .plan-period { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .plan-features { list-style: none; text-align: left; font-size: 13px; color: var(--text2); }
+  .plan-features li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .plan-features li:last-child { border: none; }
+  .plan-features li::before { content: '✓ '; color: var(--orange); font-weight: 700; }
+  .plans-section-title { font-family: 'Baloo 2', cursive; font-size: 20px; font-weight: 800; color: var(--text); margin: 1.5rem 0 0.75rem; }
+
+  /* MAPA */
+  .map-wrap {
+    background: var(--bg2); border: 1px solid var(--border-orange);
+    border-radius: 18px; overflow: hidden; margin-bottom: 1.5rem;
+    position: relative; z-index: 0; isolation: isolate;
+  }
+  .map-frame { width: 100%; height: 380px; border: none; display: block; }
+  .locations-list { display: grid; gap: 10px; margin-bottom: 1rem; }
+  .loc-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 16px;
+    display: flex; gap: 12px; align-items: center;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .loc-card:hover { border-color: var(--border-orange); transform: translateX(4px); }
+  .loc-icon { font-size: 24px; flex-shrink: 0; }
+  .loc-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .loc-addr { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* HISTORIA – TIMELINE */
+  .timeline { position: relative; padding-left: 32px; }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 10px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--orange) 0%, rgba(255,102,0,0.1) 100%);
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 28px;
+    animation: fadeUp 0.5s ease-out both;
+  }
+  .tl-item:nth-child(1) { animation-delay: 0.05s; }
+  .tl-item:nth-child(2) { animation-delay: 0.12s; }
+  .tl-item:nth-child(3) { animation-delay: 0.19s; }
+  .tl-item:nth-child(4) { animation-delay: 0.26s; }
+  .tl-item:nth-child(5) { animation-delay: 0.33s; }
+  .tl-item:nth-child(6) { animation-delay: 0.40s; }
+  .tl-item:nth-child(7) { animation-delay: 0.47s; }
+  .tl-item:nth-child(8) { animation-delay: 0.54s; }
+  .tl-dot {
+    position: absolute; left: -26px; top: 14px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--orange);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 8px rgba(255,102,0,0.6);
+    transition: transform 0.2s;
+  }
+  .tl-item:hover .tl-dot { transform: scale(1.4); }
+  .tl-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    transition: all 0.2s;
+  }
+  .tl-card:hover { border-color: var(--border-orange); background: rgba(255,102,0,0.04); transform: translateX(4px); }
+  .tl-year {
+    font-family: 'Baloo 2', cursive;
+    font-size: 22px; font-weight: 800;
+    color: var(--orange);
+    text-shadow: 0 0 14px rgba(255,102,0,0.4);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .tl-event { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .tl-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .tl-badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 99px;
+    background: rgba(255,102,0,0.15);
+    color: var(--orange);
+    border: 1px solid rgba(255,102,0,0.3);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  /* HISTORIA */
+  .about-hero {
+    border-radius: 22px; padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    background: var(--bg2);
+    border: 1px solid var(--border-orange);
+    position: relative; overflow: hidden;
+  }
+  .about-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 80% at 50% 0%, rgba(255,102,0,0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .about-hero-name { font-family: 'Baloo 2', cursive; font-size: 52px; font-weight: 800; color: var(--orange); line-height: 1; text-shadow: 0 0 40px rgba(255,102,0,0.5); position: relative; }
+  .about-hero-text { font-size: 14px; color: var(--text2); margin-top: 10px; line-height: 1.7; position: relative; }
+  .about-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem;
+  }
+  .stat-box {
+    background: var(--bg2); border-radius: 14px; padding: 16px 10px;
+    text-align: center; border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .stat-box:hover { border-color: var(--border-orange); }
+  .stat-num { font-family: 'Baloo 2', cursive; font-size: 26px; font-weight: 800; color: var(--orange); text-shadow: 0 0 16px rgba(255,102,0,0.4); }
+  .stat-label { font-size: 11px; color: var(--text3); font-weight: 600; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+  .about-cards { display: grid; gap: 10px; }
+  .about-card {
+    background: var(--bg2); border-radius: 14px; padding: 14px 16px;
+    display: flex; gap: 14px; align-items: center;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--orange);
+    transition: all 0.2s;
+  }
+  .about-card:hover { background: rgba(255,102,0,0.04); border-color: var(--border-orange); border-left-color: var(--orange); transform: translateX(4px); }
+  .about-card-icon { font-size: 28px; flex-shrink: 0; }
+  .about-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .about-card-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+  /* FOOTER */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border-orange);
+    text-align: center; padding: 2rem 1rem;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  footer strong { color: var(--orange); }
+
+  @media (max-width: 600px) {
+    .nav-btn { padding: 10px 9px; font-size: 12px; }
+    .stat-num { font-size: 20px; }
+    #hero-brand { flex-direction: column; gap: 10px; }
+    #hero-logo { font-size: clamp(48px, 16vw, 80px); }
+    #hero-logo-img { width: 70px; height: 70px; }
+    .plans-grid { grid-template-columns: 1fr; }
+    #theme-toggle { bottom: 16px; right: 16px; width: 44px; height: 44px; font-size: 18px; }
+    .counters-section { grid-template-columns: 1fr 1fr; }
+    .map-frame { height: 280px; }
+    .about-hero { padding: 1.2rem 1rem; }
+    .about-hero-name { font-size: 36px; }
+    .senior-hero { padding: 1.2rem 1rem; }
+    .senior-call-btn { padding: 12px 20px; font-size: 16px; }
+    .page-section { padding: 2rem 0.75rem 4rem; }
+  }
+
+  /* DARK/LIGHT MODE */
+  body.light-mode {
+    --bg: #f5f5f5; --bg2: #ffffff; --bg3: #eeeeee; --bg4: #e0e0e0;
+    --border: rgba(0,0,0,0.1); --border-orange: rgba(255,102,0,0.4);
+    --text: #1a1a1a; --text2: #444444; --text3: #888888;
+  }
+  body.light-mode nav { background: rgba(255,255,255,0.95); }
+  body.light-mode #hero { background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(255,102,0,0.08) 0%, transparent 70%), #f5f5f5; }
+
+  #theme-toggle {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--orange); border: none; cursor: pointer;
+    font-size: 22px; box-shadow: 0 4px 20px rgba(255,102,0,0.5);
+    transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+  }
+  #theme-toggle:hover { transform: scale(1.15); box-shadow: 0 6px 28px rgba(255,102,0,0.7); }
+
+  /* ANIMATED COUNTERS */
+  .counters-section {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    margin: 2rem 0;
+  }
+  .counter-card {
+    background: var(--bg2); border: 1px solid var(--border-orange);
+    border-radius: 18px; padding: 1.4rem 1rem; text-align: center;
+    transition: transform 0.25s;
+  }
+  .counter-card:hover { transform: translateY(-4px); }
+  .counter-num {
+    font-family: 'Baloo 2', cursive; font-size: clamp(32px, 7vw, 52px);
+    font-weight: 800; color: var(--orange);
+    text-shadow: 0 0 20px rgba(255,102,0,0.4); line-height: 1;
+  }
+  .counter-label { font-size: 12px; color: var(--text3); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+  .counter-icon { font-size: 28px; margin-bottom: 8px; }
+
+  /* 5G VISUALIZER */
+  .speed-section { margin: 2rem 0; }
+  .speed-row { margin-bottom: 18px; }
+  .speed-label { display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px; font-size: 13px; font-weight: 700; }
+  .speed-label span:first-child { color: var(--text); }
+  .speed-label span:last-child { color: var(--orange); font-family: 'Baloo 2', cursive; font-size: 15px; }
+  .speed-bar-bg { background: var(--bg3); border-radius: 99px; height: 18px; overflow: hidden; }
+  .speed-bar-fill {
+    height: 100%; border-radius: 99px; width: 0%;
+    background: linear-gradient(90deg, var(--orange-dark), var(--orange), #ffaa00);
+    box-shadow: 0 0 12px rgba(255,102,0,0.5);
+    transition: width 1.4s cubic-bezier(.25,.46,.45,.94);
+  }
+  .speed-btn {
+    margin-top: 1rem; padding: 11px 28px; background: var(--orange); color: white;
+    border: none; border-radius: 12px; font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(255,102,0,0.35);
+  }
+  .speed-btn:hover { background: var(--orange-light); transform: scale(1.04); }
+
+  /* PLAN COMPARATOR */
+  .plan-slider-wrap { margin: 1.5rem 0; }
+  .plan-slider-label { font-size: 14px; color: var(--text2); margin-bottom: 8px; font-weight: 700; }
+  .plan-slider { width: 100%; accent-color: var(--orange); height: 6px; cursor: pointer; }
+  .plan-result {
+    margin-top: 1.2rem; background: var(--bg2); border: 2px solid var(--orange);
+    border-radius: 18px; padding: 1.2rem 1.4rem;
+    animation: slideDown 0.3s ease-out;
+  }
+  .plan-result-name { font-family: 'Baloo 2', cursive; font-size: 22px; font-weight: 800;
+    color: var(--orange); margin-bottom: 6px; }
+  .plan-result-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
+  .plan-badge { display: inline-block; background: var(--orange); color: white;
+    padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700;
+    margin-top: 8px; }
+
+  /* VISIT COUNTER */
+  .visit-bar {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 10px 18px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 1.5rem; font-size: 13px; color: var(--text3);
+  }
+  .visit-dot { width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(1.3)} }
+  .visit-num { color: var(--orange); font-weight: 800; font-family: 'Baloo 2', cursive; font-size: 16px; }
+
+  /* SENIOR SECTION */
+  #seniorzy { font-size: 16px; }
+  .senior-hero {
+    background: linear-gradient(135deg, rgba(255,102,0,0.15), rgba(255,102,0,0.05));
+    border: 2px solid var(--border-orange);
+    border-radius: 22px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .senior-hero-icon { font-size: 64px; margin-bottom: 12px; }
+  .senior-hero-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 800;
+    color: var(--orange);
+    margin-bottom: 8px;
+  }
+  .senior-hero-sub { font-size: 16px; color: var(--text2); line-height: 1.7; }
+
+  .senior-font-toggle {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin: 1.2rem 0 2rem;
+  }
+  .sfont-btn {
+    padding: 10px 20px; border-radius: 12px;
+    border: 2px solid var(--border-orange);
+    background: var(--bg3); color: var(--text);
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .sfont-btn.active { background: var(--orange); color: white; border-color: var(--orange); }
+  .sfont-btn:hover { transform: scale(1.05); }
+
+  .senior-card {
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 1.6rem;
+    margin-bottom: 1.2rem;
+    transition: all 0.25s;
+  }
+  .senior-card:hover { border-color: var(--border-orange); transform: translateY(-3px); box-shadow: 0 8px 28px rgba(255,102,0,0.12); }
+  .senior-card-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 12px;
+  }
+  .senior-card-icon {
+    font-size: 36px; width: 60px; height: 60px;
+    background: var(--bg3); border-radius: 16px;
+    border: 1px solid var(--border-orange);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .senior-card-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 20px; font-weight: 800;
+    color: var(--orange);
+  }
+  .senior-card-price {
+    font-size: 14px; color: var(--text3); margin-top: 2px;
+  }
+  .senior-card-desc {
+    font-size: 15px; color: var(--text2);
+    line-height: 1.8;
+  }
+  .senior-card-desc li {
+    margin-bottom: 4px;
+    list-style: none;
+    padding-left: 0;
+  }
+  .senior-card-desc li::before { content: '✅ '; }
+
+  .senior-tip {
+    background: rgba(255,102,0,0.08);
+    border-left: 4px solid var(--orange);
+    border-radius: 0 14px 14px 0;
+    padding: 14px 16px;
+    margin-bottom: 1rem;
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .senior-tip strong { color: var(--orange); }
+
+  .senior-emergency {
+    background: var(--bg2);
+    border: 2px solid #ef4444;
+    border-radius: 20px;
+    padding: 1.4rem;
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+  .senior-emergency-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 20px; font-weight: 800;
+    color: #ef4444; margin-bottom: 10px;
+  }
+  .senior-call-btn {
+    display: inline-block;
+    background: #ef4444; color: white;
+    padding: 14px 32px; border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px; font-weight: 800;
+    text-decoration: none; margin: 6px;
+    box-shadow: 0 4px 16px rgba(239,68,68,0.35);
+    transition: all 0.2s;
+  }
+  .senior-call-btn:hover { transform: scale(1.05); }
+  .senior-call-btn.orange-btn { background: var(--orange); box-shadow: 0 4px 16px rgba(255,102,0,0.35); }
+
+  /* Big font mode for seniors */
+  #seniorzy.big-font { font-size: 20px; }
+  #seniorzy.big-font .senior-card-title { font-size: 24px; }
+  #seniorzy.big-font .senior-card-desc { font-size: 18px; }
+  #seniorzy.big-font .senior-tip { font-size: 18px; }
+  #seniorzy.big-font .senior-hero-title { font-size: 36px; }
+  #seniorzy.big-font .senior-call-btn { font-size: 22px; padding: 18px 36px; }
+  #seniorzy.big-font .senior-card-icon { font-size: 44px; width: 72px; height: 72px; }
+
+</style>
+</head>
+<body>
+
+
+<!-- HERO -->
+<section id="hero">
+  <div class="grid-bg"></div>
+  <div class="bubble b1"></div>
+  <div class="bubble b2"></div>
+  <div class="bubble b3"></div>
+  <div id="hero-brand"><img id="hero-logo-img" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAfQB9ADASIAAhEBAxEB/8QAHAABAAMAAwEBAAAAAAAAAAAAAAYHCAMEBQIB/8QAVxABAAEDAgIDCQcQCQMEAQQDAAECAwQFEQYHEiExE0FRYXGBkaGyFCI2cnN0sRUWFyMyNTdCUlVigpSzwdEkM1SDkpOiwtI0Q1MIo+HwYyVEZPEmReL/xAAcAQEAAwEBAQEBAAAAAAAAAAAABQYHBAMBAgj/xABDEQEAAQIDAgoHBgUDBAMBAAAAAQIDBAURBrESITFBUWFxkcHREyI0NXKBoRQWMlLh8CMzQlOyFWLxJIKS0kOiwuL/2gAMAwEAAhEDEQA/AJAA/npvQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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" alt="Orange logo"><div id="hero-logo">orange</div></div>
+  <div id="hero-sub">Odkryj świat połączeń 🌍</div>
+  <p id="hero-desc">Internet, smartfony i mnóstwo możliwości — dla każdego z nas. Sprawdź, jak Orange łączy Polskę!</p>
+  <div id="scroll-hint">
+    <span>Przewiń w dół</span>
+    <div class="arrow-down"></div>
+  </div>
+</section>
+
+<!-- NAV -->
+<!-- THEME TOGGLE -->
+<button id="theme-toggle" onclick="toggleTheme()" title="Tryb jasny/ciemny">🌙</button>
+
+<div class="nav-wrapper">
+  <button class="nav-arrow nav-arrow-left" onclick="scrollNav(-1)">&#8249;</button>
+  <nav id="main-nav">
+  <button class="nav-btn active" onclick="showSection('facts', this)">💡 Ciekawostki</button>
+  <button class="nav-btn" onclick="showSection('historia', this)">📖 Historia</button>
+  <button class="nav-btn" onclick="showSection('about', this)">📱 O Orange</button>
+  <button class="nav-btn" onclick="showSection('oferty', this)">💰 Oferty</button>
+  <button class="nav-btn" onclick="showSection('mapa', this)">📍 Mapa</button>
+  <button class="nav-btn" onclick="showSection('stats', this)">📊 Statystyki</button>
+  <button class="nav-btn" onclick="showSection('porownaj', this)">⚡ 5G vs 4G</button>
+  <button class="nav-btn" onclick="showSection('kalkulator', this)">📱 Dobierz plan</button>
+  <button class="nav-btn" onclick="showSection('seniorzy', this)">👴 Dla Seniorów</button>
+  </nav>
+  <button class="nav-arrow nav-arrow-right" onclick="scrollNav(1)">&#8249;</button>
+</div>
+
+<!-- CIEKAWOSTKI -->
+<section id="facts" class="page-section active">
+  <div class="section-title">💡 Ciekawostki</div>
+  <p class="section-sub">Kliknij na kartę, żeby odkryć tajemnicę!</p>
+  <div class="fact-grid">
+    <div class="fact-card" onclick="this.classList.toggle('open')">
+      <div class="fact-icon">🌍</div>
+      <div>
+        <div class="fact-title">Orange działa w 26 krajach!</div>
+        <div class="fact-teaser">To jeden z największych gigantów telekomów na świecie.</div>
+        <div class="tap-hint">👆 Kliknij, żeby dowiedzieć się więcej</div>
+        <div class="fact-reveal">Orange obsługuje ponad <strong>280 milionów klientów</strong> na całym świecie! To więcej niż łączna liczba mieszkańców Francji, Niemiec i Polski razem wziętych.</div>
+      </div>
+    </div>
+    <div class="fact-card" onclick="this.classList.toggle('open')">
+      <div class="fact-icon">📶</div>
+      <div>
+        <div class="fact-title">Sieć 5G – superszybki internet</div>
+        <div class="fact-teaser">Orange buduje 5G w całej Polsce.</div>
+        <div class="tap-hint">👆 Kliknij, żeby dowiedzieć się więcej</div>
+        <div class="fact-reveal">Sieć <strong>5G jest nawet 100× szybsza niż 4G!</strong> Możesz pobrać cały film HD w mniej niż 1 sekundę. Orange ma jedną z największych sieci 5G w Polsce.</div>
+      </div>
+    </div>
+    <div class="fact-card" onclick="this.classList.toggle('open')">
+      <div class="fact-icon">🧡</div>
+      <div>
+        <div class="fact-title">Skąd pochodzi nazwa "Orange"?</div>
+        <div class="fact-teaser">Pomarańczowy kolor to nie przypadek!</div>
+        <div class="tap-hint">👆 Kliknij, żeby dowiedzieć się więcej</div>
+        <div class="fact-reveal">Marka Orange powstała w <strong>1994 roku</strong> w Wielkiej Brytanii. Założyciele wybrali pomarańczowy, bo kojarzy się z ciepłem, energią i radością. Dziś to jeden z najbardziej rozpoznawalnych kolorów na świecie!</div>
+      </div>
+    </div>
+    <div class="fact-card" onclick="this.classList.toggle('open')">
+      <div class="fact-icon">🌱</div>
+      <div>
+        <div class="fact-title">Orange dba o naszą planetę</div>
+        <div class="fact-teaser">Ekologia jest dla nich naprawdę ważna.</div>
+        <div class="tap-hint">👆 Kliknij, żeby dowiedzieć się więcej</div>
+        <div class="fact-reveal">Orange zobowiązało się do <strong>zerowej emisji CO₂ do 2040 roku!</strong> Firma sadzi lasy, korzysta z energii słonecznej i recykluje stare telefony.</div>
+      </div>
+    </div>
+    <div class="fact-card" onclick="this.classList.toggle('open')">
+      <div class="fact-icon">🏫</div>
+      <div>
+        <div class="fact-title">Fundacja Orange pomaga dzieciom</div>
+        <div class="fact-teaser">Ponad 400 pracowni w małych miastach!</div>
+        <div class="tap-hint">👆 Kliknij, żeby dowiedzieć się więcej</div>
+        <div class="fact-reveal"><strong>Fundacja Orange</strong> prowadzi program "Pracownie Orange" — bezpłatne miejsca z internetem i komputerami dla dzieci w całej Polsce. Nawet w małej wsi możesz korzystać z nowoczesnych technologii!</div>
+      </div>
+    </div>
+    <div class="fact-card" onclick="this.classList.toggle('open')">
+      <div class="fact-icon">📺</div>
+      <div>
+        <div class="fact-title">Orange oferuje też telewizję!</div>
+        <div class="fact-teaser">Nie tylko internet i telefon.</div>
+        <div class="tap-hint">👆 Kliknij, żeby dowiedzieć się więcej</div>
+        <div class="fact-reveal">Orange TV oferuje ponad <strong>200 kanałów</strong> i filmy na żądanie. Można oglądać na telewizorze, tablecie i smartfonie — wszędzie tam, gdzie jest internet!</div>
+      </div>
+    </div>
+  </div>
+  <div class="contact-block">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">💬</span><div><strong>Chat online</strong><br><a href="https://www.orange.pl" target="_blank">orange.pl</a> → ikona czatu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#f89397968c99938cb8978a99969f9dd68894"><span class="__cf_email__" data-cfemail="fe9591908a9f958abe918c9f90999bd08e92">[email&#160;protected]</span></a></div></div>
+    <div class="contact-row"><span class="contact-icon">📱</span><div><strong>Aplikacja Mój Orange</strong><br>Zarządzaj kontem przez aplikację mobilną</div></div>
+  </div>
+</section>
+
+<!-- HISTORIA -->
+<section id="historia" class="page-section">
+  <div class="section-title">📖 Historia Orange</div>
+  <p class="section-sub">Od małej firmy w Londynie do globalnego giganta — oto jak to się zaczęło!</p>
+
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">🇬🇧 Wielka Brytania</div>
+        <div class="tl-year">1994</div>
+        <div class="tl-event">Narodziny Orange</div>
+        <div class="tl-desc">W Londynie powstaje firma Orange plc. Jej założyciel, Hutchison Whampoa, wybiera pomarańczowy kolor jako symbol energii i ciepła. Od razu wyróżnia się na tle szarej konkurencji.</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">📱 Przełom</div>
+        <div class="tl-year">1996</div>
+        <div class="tl-event">Giełda i wielki sukces</div>
+        <div class="tl-desc">Orange wchodzi na giełdę londyńską i staje się jedną z najszybciej rozwijających się firm telefonii komórkowej w Europie. Miliony klientów wybierają pomarańczową markę.</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">💰 Mega transakcja</div>
+        <div class="tl-year">2000</div>
+        <div class="tl-event">France Télécom przejmuje Orange</div>
+        <div class="tl-desc">Francuski gigant France Télécom kupuje Orange za astronomiczną kwotę 37 miliardów dolarów! To jedna z największych transakcji w historii telekomunikacji.</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">🇵🇱 Polska</div>
+        <div class="tl-year">2006</div>
+        <div class="tl-event">Telekomunikacja Polska staje się Orange</div>
+        <div class="tl-desc">W Polsce dawna Telekomunikacja Polska (TP) zmienia się w Orange Polska. Miliony Polaków zaczynają korzystać z pomarańczowej sieci. Zaczyna się nowa era internetu w Polsce!</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">🏫 Edukacja</div>
+        <div class="tl-year">2012</div>
+        <div class="tl-event">Fundacja Orange — internet dla dzieci</div>
+        <div class="tl-desc">Powstają pierwsze "Pracownie Orange" — bezpłatne miejsca z komputerami i internetem dla dzieci w małych miejscowościach. Dziś jest ich ponad 400 w całej Polsce!</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">⚡ Technologia</div>
+        <div class="tl-year">2015</div>
+        <div class="tl-event">Sieć 4G w całej Polsce</div>
+        <div class="tl-desc">Orange jako jeden z pierwszych operatorów w Polsce buduje szeroką sieć 4G LTE. Internet mobilny staje się superszybki — można oglądać filmy i grać w gry bez lagów!</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">🚀 Przyszłość</div>
+        <div class="tl-year">2020</div>
+        <div class="tl-event">Era 5G w Polsce</div>
+        <div class="tl-desc">Orange startuje z siecią 5G w największych polskich miastach. Prędkość internetu osiąga niesamowite wartości — do 1 Gb/s! To 100 razy szybciej niż stara sieć 4G.</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+        <div class="tl-badge">🌱 Dziś</div>
+        <div class="tl-year">2024</div>
+        <div class="tl-event">Orange stawia na ekologię i AI</div>
+        <div class="tl-desc">Orange inwestuje w sztuczną inteligencję, zieloną energię i rozbudowę sieci 5G. Cel: zero emisji CO₂ do 2040 roku i internet dla każdego Polaka — bez wyjątku!</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="contact-block">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">💬</span><div><strong>Chat online</strong><br><a href="https://www.orange.pl" target="_blank">orange.pl</a> → ikona czatu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#c2a9adacb6a3a9b682adb0a3aca5a7ecb2ae"><span class="__cf_email__" data-cfemail="81eaeeeff5e0eaf5c1eef3e0efe6e4aff1ed">[email&#160;protected]</span></a></div></div>
+    <div class="contact-row"><span class="contact-icon">📱</span><div><strong>Aplikacja Mój Orange</strong><br>Zarządzaj kontem przez aplikację mobilną</div></div>
+  </div>
+</section>
+
+<!-- O ORANGE -->
+<section id="about" class="page-section">
+  <div class="section-title">📱 O Orange</div>
+  <p class="section-sub">Kim są i co robią?</p>
+  <div class="about-hero">
+    <div class="about-hero-name">orange</div>
+    <div class="about-hero-text">Polska firma telekomunikacyjna, która łączy miliony ludzi każdego dnia.<br>Internet · Telefon · Telewizja · Nowoczesne usługi</div>
+  </div>
+  <div class="about-stats">
+    <div class="stat-box"><div class="stat-num">26</div><div class="stat-label">krajów</div></div>
+    <div class="stat-box"><div class="stat-num">280M</div><div class="stat-label">klientów</div></div>
+    <div class="stat-box"><div class="stat-num">1994</div><div class="stat-label">założona</div></div>
+  </div>
+  <div class="about-cards">
+    <div class="about-card"><div class="about-card-icon">📡</div><div><div class="about-card-title">Internet dla wszystkich</div><div class="about-card-text">Orange dostarcza szybki internet do domu, na telefon i w biurze. Sieć 5G dociera do coraz większej części Polski.</div></div></div>
+    <div class="about-card"><div class="about-card-icon">📞</div><div><div class="about-card-title">Połączenia głosowe i SMS</div><div class="about-card-text">Dzięki Orange możesz rozmawiać z bliskimi w Polsce i za granicą. Oferty dla dzieci, seniorów i całych rodzin.</div></div></div>
+    <div class="about-card"><div class="about-card-icon">🏫</div><div><div class="about-card-title">Fundacja Orange – edukacja</div><div class="about-card-text">Ponad 400 bezpłatnych pracowni z internetem dla dzieci w całej Polsce. Orange wierzy, że każde dziecko ma prawo do technologii.</div></div></div>
+    <div class="about-card"><div class="about-card-icon">🌱</div><div><div class="about-card-title">Ekologia i przyszłość</div><div class="about-card-text">Zero emisji CO₂ do 2040 roku, recyckling telefonów, energia odnawialna. Orange dba o naszą planetę.</div></div></div>
+    <div class="about-card"><div class="about-card-icon">🔒</div><div><div class="about-card-title">Bezpieczeństwo w sieci</div><div class="about-card-text">Orange chroni klientów przed wirusami i oszustami. Specjalne pakiety bezpieczeństwa dla rodzin z dziećmi.</div></div></div>
+  </div>
+  <div class="contact-block">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">💬</span><div><strong>Chat online</strong><br><a href="https://www.orange.pl" target="_blank">orange.pl</a> → ikona czatu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#690206071d08021d29061b08070e0c471905"><span class="__cf_email__" data-cfemail="2e4541405a4f455a6e415c4f40494b005e42">[email&#160;protected]</span></a></div></div>
+    <div class="contact-row"><span class="contact-icon">📱</span><div><strong>Aplikacja Mój Orange</strong><br>Zarządzaj kontem przez aplikację mobilną</div></div>
+  </div>
+</section>
+
+<!-- OFERTY -->
+<section id="oferty" class="page-section">
+  <div class="section-title">💰 Oferty Orange</div>
+  <p class="section-sub">Wybierz plan idealny dla siebie!</p>
+
+  <div class="plans-section-title">📱 Plany abonamentowe</div>
+  <div class="plans-grid">
+    <div class="plan-card">
+      <div class="plan-badge">BASIC</div>
+      <div class="plan-name">Orange Start</div>
+      <div class="plan-price">29<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>5 GB internetu</li>
+        <li>Nielimitowane rozmowy</li>
+        <li>Nielimitowane SMS</li>
+        <li>Sieć 4G/LTE</li>
+      </ul>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge">🔥 POPULAR</div>
+      <div class="plan-name">Orange Free</div>
+      <div class="plan-price">55<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>30 GB internetu</li>
+        <li>Nielimitowane rozmowy</li>
+        <li>Nielimitowane SMS/MMS</li>
+        <li>Sieć 5G</li>
+        <li>Roaming w UE</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-badge">MAX</div>
+      <div class="plan-name">Orange Max</div>
+      <div class="plan-price">79<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>100 GB internetu</li>
+        <li>Nielimitowane rozmowy</li>
+        <li>Nielimitowane SMS/MMS</li>
+        <li>Sieć 5G Ultra</li>
+        <li>Roaming w UE + USA</li>
+        <li>Orange TV w cenie</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="plans-section-title">🌐 Internet domowy</div>
+  <div class="plans-grid">
+    <div class="plan-card">
+      <div class="plan-badge">DOM</div>
+      <div class="plan-name">Światłowód 300</div>
+      <div class="plan-price">59<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>300 Mb/s pobieranie</li>
+        <li>100 Mb/s wysyłanie</li>
+        <li>Router WiFi 6 w cenie</li>
+        <li>Bez limitu danych</li>
+      </ul>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge">🔥 BEST</div>
+      <div class="plan-name">Światłowód 1 Gb</div>
+      <div class="plan-price">79<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>1000 Mb/s pobieranie</li>
+        <li>300 Mb/s wysyłanie</li>
+        <li>Router WiFi 6E</li>
+        <li>Bez limitu danych</li>
+        <li>Orange TV gratis</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-badge">BIZNES</div>
+      <div class="plan-name">Dla firm</div>
+      <div class="plan-price">99<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>Symetryczny 1 Gb/s</li>
+        <li>Dedykowany opiekun</li>
+        <li>SLA 99.9% uptime</li>
+        <li>Statyczny IP</li>
+        <li>Wsparcie 24/7</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="plans-section-title">📺 Orange TV</div>
+  <div class="plans-grid">
+    <div class="plan-card">
+      <div class="plan-badge">TV START</div>
+      <div class="plan-name">Pakiet Basic</div>
+      <div class="plan-price">19<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>60+ kanałów</li>
+        <li>TV na żądanie</li>
+        <li>1 urządzenie</li>
+      </ul>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-badge">🔥 TV MAX</div>
+      <div class="plan-name">Pakiet Premium</div>
+      <div class="plan-price">39<span style="font-size:16px">zł</span></div>
+      <div class="plan-period">/ miesiąc</div>
+      <ul class="plan-features">
+        <li>200+ kanałów</li>
+        <li>HBO, Polsat, TVN</li>
+        <li>4K Ultra HD</li>
+        <li>5 urządzeń</li>
+        <li>Nagrywanie w chmurze</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="contact-block">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">💬</span><div><strong>Chat online</strong><br><a href="https://www.orange.pl" target="_blank">orange.pl</a> → ikona czatu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#ee8581809a8f859aae819c8f80898bc09e82"><span class="__cf_email__" data-cfemail="2a4145445e4b415e6a45584b444d4f045a46">[email&#160;protected]</span></a></div></div>
+    <div class="contact-row"><span class="contact-icon">📱</span><div><strong>Aplikacja Mój Orange</strong><br>Zarządzaj kontem przez aplikację mobilną</div></div>
+  </div>
+</section>
+
+<!-- MAPA -->
+<section id="mapa" class="page-section">
+  <div class="section-title">📍 Salony Orange</div>
+  <p class="section-sub">Znajdź najbliższy salon — ponad 800 lokalizacji w Polsce!</p>
+
+  <div class="map-wrap">
+    <div id="orange-map" style="width:100%;height:420px;border-radius:14px;border:1px solid rgba(255,102,0,0.35);overflow:hidden;"></div>
+  </div>
+
+  
+<script>
+window._orangeMapInited = false;
+  function initOrangeMap() {
+    if (window._orangeMapInited) return;
+    window._orangeMapInited = true;
+    var salony = [
+      // Warszawa
+      { name: "Orange — Złote Tarasy, Warszawa", addr: "ul. Złota 59, 00-120 Warszawa", lat: 52.2282, lng: 21.0016 },
+      { name: "Orange — Galeria Mokotów, Warszawa", addr: "ul. Wołoska 12, 02-675 Warszawa", lat: 52.1808, lng: 21.0000 },
+      { name: "Orange — Arkadia, Warszawa", addr: "al. Jana Pawła II 82, 00-175 Warszawa", lat: 52.2564, lng: 20.9815 },
+      { name: "Orange — Blue City, Warszawa", addr: "al. Jerozolimskie 179, 02-222 Warszawa", lat: 52.2148, lng: 20.9474 },
+      // Kraków
+      { name: "Orange — Galeria Krakowska", addr: "ul. Pawia 5, 31-154 Kraków", lat: 50.0658, lng: 19.9450 },
+      { name: "Orange — Bonarka City Center, Kraków", addr: "ul. Kamieńskiego 11, 30-644 Kraków", lat: 50.0200, lng: 19.9474 },
+      { name: "Orange — Galeria Plaza, Kraków", addr: "ul. Pokoju 44, 31-564 Kraków", lat: 50.0720, lng: 20.0001 },
+      // Wrocław
+      { name: "Orange — Magnolia Park, Wrocław", addr: "ul. Legnicka 58, 54-204 Wrocław", lat: 51.1085, lng: 16.9794 },
+      { name: "Orange — Galeria Dominikańska, Wrocław", addr: "pl. Dominikański 3, 50-159 Wrocław", lat: 51.1100, lng: 17.0300 },
+      { name: "Orange — Arkady Wrocławskie", addr: "ul. Powstańców Śląskich 2-4, Wrocław", lat: 51.0882, lng: 17.0260 },
+      // Gdańsk / Trójmiasto
+      { name: "Orange — Forum Gdańsk", addr: "ul. Targ Sienny 7, 80-806 Gdańsk", lat: 54.3482, lng: 18.6472 },
+      { name: "Orange — Galeria Bałtycka, Gdańsk", addr: "al. Grunwaldzka 141, 80-264 Gdańsk", lat: 54.3810, lng: 18.6210 },
+      { name: "Orange — Klif Gdynia", addr: "ul. Śląska 49, 81-310 Gdynia", lat: 54.5100, lng: 18.5010 },
+      // Poznań
+      { name: "Orange — Stary Browar, Poznań", addr: "ul. Półwiejska 42, 61-888 Poznań", lat: 52.4064, lng: 16.9356 },
+      { name: "Orange — Posnania, Poznań", addr: "ul. Pleszewska 1, 61-136 Poznań", lat: 52.4195, lng: 16.9874 },
+      // Łódź
+      { name: "Orange — Manufaktura, Łódź", addr: "ul. Ogrodowa 19, 91-065 Łódź", lat: 51.7745, lng: 19.4541 },
+      { name: "Orange — Galeria Łódzka", addr: "ul. Piłsudskiego 15, 90-307 Łódź", lat: 51.7672, lng: 19.4598 },
+      // Katowice / Śląsk
+      { name: "Orange — Silesia City Center, Katowice", addr: "ul. Chorzowska 107, 40-101 Katowice", lat: 50.2590, lng: 19.0010 },
+      { name: "Orange — Galeria Katowicka", addr: "ul. 3 Maja 30, 40-097 Katowice", lat: 50.2588, lng: 19.0230 },
+      { name: "Orange — King Cross Marcelin, Poznań", addr: "ul. Bukowska 156, 60-189 Poznań", lat: 52.4031, lng: 16.8608 },
+      // Szczecin
+      { name: "Orange — Galaxy, Szczecin", addr: "al. Wyzwolenia 18, 71-413 Szczecin", lat: 53.4285, lng: 14.5528 },
+      { name: "Orange — Outlet Park, Szczecin", addr: "ul. Ku Słońcu 51, 71-073 Szczecin", lat: 53.4620, lng: 14.4985 },
+      // Lublin
+      { name: "Orange — Galeria Olimp, Lublin", addr: "ul. Orkana 6, 20-850 Lublin", lat: 51.2430, lng: 22.5140 },
+      { name: "Orange — Felicity, Lublin", addr: "al. Kraśnicka 98, 20-718 Lublin", lat: 51.2180, lng: 22.5055 },
+      // Rzeszów
+      { name: "Orange — Galeria Rzeszów", addr: "al. Rejtana 65, 35-326 Rzeszów", lat: 50.0300, lng: 21.9900 },
+      { name: "Orange — Millenium Hall, Rzeszów", addr: "ul. Kwiatkowskiego 1, 35-312 Rzeszów", lat: 50.0225, lng: 21.9888 },
+      // Leżajsk
+      { name: "Orange — Leżajsk", addr: "ul. Mickiewicza 33, 37-300 Leżajsk", lat: 50.2628, lng: 22.4193 },
+      // Białystok
+      { name: "Orange — Galeria Biała, Białystok", addr: "ul. Produce 12, 15-862 Białystok", lat: 53.1234, lng: 23.1688 },
+      { name: "Orange — Galeria Alfa, Białystok", addr: "ul. Wrocławska 20, 15-642 Białystok", lat: 53.1480, lng: 23.1270 },
+      // Bydgoszcz
+      { name: "Orange — Focus Mall, Bydgoszcz", addr: "ul. Jagiellońska 39, 85-097 Bydgoszcz", lat: 53.1220, lng: 18.0060 },
+      // Toruń
+      { name: "Orange — Galeria Copernicus, Toruń", addr: "ul. Szosa Chełmińska 22, 87-100 Toruń", lat: 53.0280, lng: 18.6060 },
+      // Kielce
+      { name: "Orange — Galeria Echo, Kielce", addr: "ul. Świętokrzyska 15, 25-406 Kielce", lat: 50.8660, lng: 20.6327 },
+      // Olsztyn
+      { name: "Orange — Galeria Warmińska, Olsztyn", addr: "ul. Tuwima 26, 10-748 Olsztyn", lat: 53.7702, lng: 20.4901 },
+      // Radom
+      { name: "Orange — Galeria Słoneczna, Radom", addr: "ul. Bolesława Chrobrego 1, 26-609 Radom", lat: 51.3917, lng: 21.1550 },
+      // Częstochowa
+      { name: "Orange — Galeria Jurajska, Częstochowa", addr: "ul. Kisielewskiego 4, 42-200 Częstochowa", lat: 50.8100, lng: 19.1175 },
+      // Opole
+      { name: "Orange — Galeria Karolinka, Opole", addr: "ul. Wrocławska 152, 45-835 Opole", lat: 50.6578, lng: 17.9280 },
+      // Gorzów Wielkopolski
+      { name: "Orange — Galeria Askana, Gorzów Wlkp.", addr: "ul. Walczaka 25, 66-400 Gorzów Wielkopolski", lat: 52.7378, lng: 15.2380 },
+      // Zielona Góra
+      { name: "Orange — Focus Mall, Zielona Góra", addr: "ul. Wrocławska 17, 65-427 Zielona Góra", lat: 51.9358, lng: 15.5117 },
+      // Koszalin
+      { name: "Orange — Galeria Emka, Koszalin", addr: "ul. Połczyńska 2, 75-814 Koszalin", lat: 54.1947, lng: 16.1699 },
+    ];
+
+    var map = L.map('orange-map', {
+      zoomControl: true,
+      minZoom: 5
+    });
+
+    // Czarne tło pod mapą
+    document.getElementById('orange-map').style.background = '#0f0f0f';
+
+    // Dopasuj do granic Polski
+    var polandBounds = L.latLngBounds([49.0, 14.1], [54.9, 24.2]);
+    map.fitBounds(polandBounds);
+    map.setMaxBounds(polandBounds.pad(0.05));
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18
+    }).addTo(map);
+
+    // Maska SVG - czarne tło poza Polską
+    var svgMask = L.svg({ padding: 2 });
+    svgMask.addTo(map);
+
+    // Przybliżony zarys granic Polski jako polygon
+    var polandOutline = [
+      [54.44, 18.57], [54.83, 18.33], [54.45, 19.66], [54.38, 22.78],
+      [54.13, 23.48], [53.97, 23.87], [53.47, 23.91], [52.75, 23.60],
+      [52.11, 23.19], [51.61, 24.15], [50.42, 24.10], [49.57, 22.86],
+      [49.20, 22.56], [49.00, 21.63], [49.18, 20.61], [49.40, 19.83],
+      [49.20, 18.97], [49.87, 18.56], [50.31, 18.67], [50.46, 17.87],
+      [50.32, 16.86], [50.66, 16.01], [51.13, 15.02], [51.46, 14.59],
+      [52.65, 14.61], [53.28, 14.24], [53.92, 14.22], [54.33, 16.31],
+      [54.44, 18.57]
+    ];
+
+    // Dodaj warstwę maski — wszystko poza Polską = czarne
+    var maskLayer = L.polygon(polandOutline, {
+      color: 'none',
+      fillColor: 'none',
+      fillOpacity: 0
+    }).addTo(map);
+
+    // Canvas overlay - rysuj czarną maskę poza Polską
+    var CanvasMask = L.Layer.extend({
+      onAdd: function(map) {
+        this._map = map;
+        this._canvas = L.DomUtil.create('canvas', 'leaflet-zoom-animated');
+        var size = map.getSize();
+        this._canvas.width = size.x;
+        this._canvas.height = size.y;
+        this._canvas.style.position = 'absolute';
+        this._canvas.style.top = '0';
+        this._canvas.style.left = '0';
+        this._canvas.style.pointerEvents = 'none';
+        this._canvas.style.zIndex = 400;
+        map.getPanes().overlayPane.appendChild(this._canvas);
+        map.on('moveend zoomend resize', this._draw, this);
+        this._draw();
+      },
+      onRemove: function(map) {
+        map.getPanes().overlayPane.removeChild(this._canvas);
+        map.off('moveend zoomend resize', this._draw, this);
+      },
+      _draw: function() {
+        var map = this._map;
+        var size = map.getSize();
+        var canvas = this._canvas;
+        canvas.width = size.x;
+        canvas.height = size.y;
+        var ctx = canvas.getContext('2d');
+
+        // Resetuj pozycję canvas do lewego górnego rogu mapy
+        var topLeft = map.containerPointToLayerPoint([0, 0]);
+        L.DomUtil.setPosition(canvas, topLeft);
+
+        // Rysuj czarne tło na całym canvasie
+        ctx.fillStyle = '#0f0f0f';
+        ctx.fillRect(0, 0, size.x, size.y);
+
+        // Wytnij kształt Polski (obszar przeźroczysty)
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        var poland = [
+          [54.44, 18.57], [54.83, 18.33], [54.45, 19.66], [54.38, 22.78],
+          [54.13, 23.48], [53.97, 23.87], [53.47, 23.91], [52.75, 23.60],
+          [52.11, 23.19], [51.61, 24.15], [50.42, 24.10], [49.57, 22.86],
+          [49.20, 22.56], [49.00, 21.63], [49.18, 20.61], [49.40, 19.83],
+          [49.20, 18.97], [49.87, 18.56], [50.31, 18.67], [50.46, 17.87],
+          [50.32, 16.86], [50.66, 16.01], [51.13, 15.02], [51.46, 14.59],
+          [52.65, 14.61], [53.28, 14.24], [53.92, 14.22], [54.33, 16.31],
+          [54.44, 18.57]
+        ];
+        var first = true;
+        poland.forEach(function(latlng) {
+          var pt = map.latLngToContainerPoint(L.latLng(latlng[0], latlng[1]));
+          if (first) { ctx.moveTo(pt.x, pt.y); first = false; }
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    });
+
+    new CanvasMask().addTo(map);
+
+    // Custom orange icon
+    var orangeIcon = L.divIcon({
+      className: '',
+      html: '<div style="background:#FF6600;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(255,102,0,0.5);"></div>',
+      iconSize: [22, 22],
+      iconAnchor: [11, 22],
+      popupAnchor: [1, -22]
+    });
+
+    salony.forEach(function(s) {
+      var marker = L.marker([s.lat, s.lng], { icon: orangeIcon }).addTo(map);
+      marker.bindPopup(
+        '<div style="font-family:Nunito,sans-serif;min-width:180px;">' +
+        '<strong style="color:#FF6600;font-size:13px;">' + s.name + '</strong><br>' +
+        '<span style="font-size:12px;color:#555;">' + s.addr + '</span><br>' +
+        '<a href="https://maps.google.com/?q=' + encodeURIComponent(s.name + ' ' + s.addr) + '" target="_blank" ' +
+        'style="display:inline-block;margin-top:6px;background:#FF6600;color:white;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;">📍 Nawiguj</a>' +
+        '</div>'
+      );
+    });
+  }
+  
+</script>
+<script>
+  window._orangeMapInited = false;
+  function initOrangeMap() {
+    if (window._orangeMapInited) return;
+    window._orangeMapInited = true;
+    var salony = [
+      // Warszawa
+      { name: "Orange — Złote Tarasy, Warszawa", addr: "ul. Złota 59, 00-120 Warszawa", lat: 52.2282, lng: 21.0016 },
+      { name: "Orange — Galeria Mokotów, Warszawa", addr: "ul. Wołoska 12, 02-675 Warszawa", lat: 52.1808, lng: 21.0000 },
+      { name: "Orange — Arkadia, Warszawa", addr: "al. Jana Pawła II 82, 00-175 Warszawa", lat: 52.2564, lng: 20.9815 },
+      { name: "Orange — Blue City, Warszawa", addr: "al. Jerozolimskie 179, 02-222 Warszawa", lat: 52.2148, lng: 20.9474 },
+      // Kraków
+      { name: "Orange — Galeria Krakowska", addr: "ul. Pawia 5, 31-154 Kraków", lat: 50.0658, lng: 19.9450 },
+      { name: "Orange — Bonarka City Center, Kraków", addr: "ul. Kamieńskiego 11, 30-644 Kraków", lat: 50.0200, lng: 19.9474 },
+      { name: "Orange — Galeria Plaza, Kraków", addr: "ul. Pokoju 44, 31-564 Kraków", lat: 50.0720, lng: 20.0001 },
+      // Wrocław
+      { name: "Orange — Magnolia Park, Wrocław", addr: "ul. Legnicka 58, 54-204 Wrocław", lat: 51.1085, lng: 16.9794 },
+      { name: "Orange — Galeria Dominikańska, Wrocław", addr: "pl. Dominikański 3, 50-159 Wrocław", lat: 51.1100, lng: 17.0300 },
+      { name: "Orange — Arkady Wrocławskie", addr: "ul. Powstańców Śląskich 2-4, Wrocław", lat: 51.0882, lng: 17.0260 },
+      // Gdańsk / Trójmiasto
+      { name: "Orange — Forum Gdańsk", addr: "ul. Targ Sienny 7, 80-806 Gdańsk", lat: 54.3482, lng: 18.6472 },
+      { name: "Orange — Galeria Bałtycka, Gdańsk", addr: "al. Grunwaldzka 141, 80-264 Gdańsk", lat: 54.3810, lng: 18.6210 },
+      { name: "Orange — Klif Gdynia", addr: "ul. Śląska 49, 81-310 Gdynia", lat: 54.5100, lng: 18.5010 },
+      // Poznań
+      { name: "Orange — Stary Browar, Poznań", addr: "ul. Półwiejska 42, 61-888 Poznań", lat: 52.4064, lng: 16.9356 },
+      { name: "Orange — Posnania, Poznań", addr: "ul. Pleszewska 1, 61-136 Poznań", lat: 52.4195, lng: 16.9874 },
+      // Łódź
+      { name: "Orange — Manufaktura, Łódź", addr: "ul. Ogrodowa 19, 91-065 Łódź", lat: 51.7745, lng: 19.4541 },
+      { name: "Orange — Galeria Łódzka", addr: "ul. Piłsudskiego 15, 90-307 Łódź", lat: 51.7672, lng: 19.4598 },
+      // Katowice / Śląsk
+      { name: "Orange — Silesia City Center, Katowice", addr: "ul. Chorzowska 107, 40-101 Katowice", lat: 50.2590, lng: 19.0010 },
+      { name: "Orange — Galeria Katowicka", addr: "ul. 3 Maja 30, 40-097 Katowice", lat: 50.2588, lng: 19.0230 },
+      { name: "Orange — King Cross Marcelin, Poznań", addr: "ul. Bukowska 156, 60-189 Poznań", lat: 52.4031, lng: 16.8608 },
+      // Szczecin
+      { name: "Orange — Galaxy, Szczecin", addr: "al. Wyzwolenia 18, 71-413 Szczecin", lat: 53.4285, lng: 14.5528 },
+      { name: "Orange — Outlet Park, Szczecin", addr: "ul. Ku Słońcu 51, 71-073 Szczecin", lat: 53.4620, lng: 14.4985 },
+      // Lublin
+      { name: "Orange — Galeria Olimp, Lublin", addr: "ul. Orkana 6, 20-850 Lublin", lat: 51.2430, lng: 22.5140 },
+      { name: "Orange — Felicity, Lublin", addr: "al. Kraśnicka 98, 20-718 Lublin", lat: 51.2180, lng: 22.5055 },
+      // Rzeszów
+      { name: "Orange — Galeria Rzeszów", addr: "al. Rejtana 65, 35-326 Rzeszów", lat: 50.0300, lng: 21.9900 },
+      { name: "Orange — Millenium Hall, Rzeszów", addr: "ul. Kwiatkowskiego 1, 35-312 Rzeszów", lat: 50.0225, lng: 21.9888 },
+      // Leżajsk
+      { name: "Orange — Leżajsk", addr: "ul. Mickiewicza 33, 37-300 Leżajsk", lat: 50.2628, lng: 22.4193 },
+      // Białystok
+      { name: "Orange — Galeria Biała, Białystok", addr: "ul. Produce 12, 15-862 Białystok", lat: 53.1234, lng: 23.1688 },
+      { name: "Orange — Galeria Alfa, Białystok", addr: "ul. Wrocławska 20, 15-642 Białystok", lat: 53.1480, lng: 23.1270 },
+      // Bydgoszcz
+      { name: "Orange — Focus Mall, Bydgoszcz", addr: "ul. Jagiellońska 39, 85-097 Bydgoszcz", lat: 53.1220, lng: 18.0060 },
+      // Toruń
+      { name: "Orange — Galeria Copernicus, Toruń", addr: "ul. Szosa Chełmińska 22, 87-100 Toruń", lat: 53.0280, lng: 18.6060 },
+      // Kielce
+      { name: "Orange — Galeria Echo, Kielce", addr: "ul. Świętokrzyska 15, 25-406 Kielce", lat: 50.8660, lng: 20.6327 },
+      // Olsztyn
+      { name: "Orange — Galeria Warmińska, Olsztyn", addr: "ul. Tuwima 26, 10-748 Olsztyn", lat: 53.7702, lng: 20.4901 },
+      // Radom
+      { name: "Orange — Galeria Słoneczna, Radom", addr: "ul. Bolesława Chrobrego 1, 26-609 Radom", lat: 51.3917, lng: 21.1550 },
+      // Częstochowa
+      { name: "Orange — Galeria Jurajska, Częstochowa", addr: "ul. Kisielewskiego 4, 42-200 Częstochowa", lat: 50.8100, lng: 19.1175 },
+      // Opole
+      { name: "Orange — Galeria Karolinka, Opole", addr: "ul. Wrocławska 152, 45-835 Opole", lat: 50.6578, lng: 17.9280 },
+      // Gorzów Wielkopolski
+      { name: "Orange — Galeria Askana, Gorzów Wlkp.", addr: "ul. Walczaka 25, 66-400 Gorzów Wielkopolski", lat: 52.7378, lng: 15.2380 },
+      // Zielona Góra
+      { name: "Orange — Focus Mall, Zielona Góra", addr: "ul. Wrocławska 17, 65-427 Zielona Góra", lat: 51.9358, lng: 15.5117 },
+      // Koszalin
+      { name: "Orange — Galeria Emka, Koszalin", addr: "ul. Połczyńska 2, 75-814 Koszalin", lat: 54.1947, lng: 16.1699 },
+    ];
+
+    var map = L.map('orange-map', {
+      zoomControl: true,
+      minZoom: 5
+    });
+
+    // Czarne tło pod mapą
+    document.getElementById('orange-map').style.background = '#0f0f0f';
+
+    // Dopasuj do granic Polski
+    var polandBounds = L.latLngBounds([49.0, 14.1], [54.9, 24.2]);
+    map.fitBounds(polandBounds);
+    map.setMaxBounds(polandBounds.pad(0.05));
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18
+    }).addTo(map);
+
+    // Maska SVG - czarne tło poza Polską
+    var svgMask = L.svg({ padding: 2 });
+    svgMask.addTo(map);
+
+    // Przybliżony zarys granic Polski jako polygon
+    var polandOutline = [
+      [54.44, 18.57], [54.83, 18.33], [54.45, 19.66], [54.38, 22.78],
+      [54.13, 23.48], [53.97, 23.87], [53.47, 23.91], [52.75, 23.60],
+      [52.11, 23.19], [51.61, 24.15], [50.42, 24.10], [49.57, 22.86],
+      [49.20, 22.56], [49.00, 21.63], [49.18, 20.61], [49.40, 19.83],
+      [49.20, 18.97], [49.87, 18.56], [50.31, 18.67], [50.46, 17.87],
+      [50.32, 16.86], [50.66, 16.01], [51.13, 15.02], [51.46, 14.59],
+      [52.65, 14.61], [53.28, 14.24], [53.92, 14.22], [54.33, 16.31],
+      [54.44, 18.57]
+    ];
+
+    // Dodaj warstwę maski — wszystko poza Polską = czarne
+    var maskLayer = L.polygon(polandOutline, {
+      color: 'none',
+      fillColor: 'none',
+      fillOpacity: 0
+    }).addTo(map);
+
+    // Canvas overlay - rysuj czarną maskę poza Polską
+    var CanvasMask = L.Layer.extend({
+      onAdd: function(map) {
+        this._map = map;
+        this._canvas = L.DomUtil.create('canvas', 'leaflet-zoom-animated');
+        var size = map.getSize();
+        this._canvas.width = size.x;
+        this._canvas.height = size.y;
+        this._canvas.style.position = 'absolute';
+        this._canvas.style.top = '0';
+        this._canvas.style.left = '0';
+        this._canvas.style.pointerEvents = 'none';
+        this._canvas.style.zIndex = 400;
+        map.getPanes().overlayPane.appendChild(this._canvas);
+        map.on('moveend zoomend resize', this._draw, this);
+        this._draw();
+      },
+      onRemove: function(map) {
+        map.getPanes().overlayPane.removeChild(this._canvas);
+        map.off('moveend zoomend resize', this._draw, this);
+      },
+      _draw: function() {
+        var map = this._map;
+        var size = map.getSize();
+        var canvas = this._canvas;
+        canvas.width = size.x;
+        canvas.height = size.y;
+        var ctx = canvas.getContext('2d');
+
+        // Resetuj pozycję canvas do lewego górnego rogu mapy
+        var topLeft = map.containerPointToLayerPoint([0, 0]);
+        L.DomUtil.setPosition(canvas, topLeft);
+
+        // Rysuj czarne tło na całym canvasie
+        ctx.fillStyle = '#0f0f0f';
+        ctx.fillRect(0, 0, size.x, size.y);
+
+        // Wytnij kształt Polski (obszar przeźroczysty)
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        var poland = [
+          [54.44, 18.57], [54.83, 18.33], [54.45, 19.66], [54.38, 22.78],
+          [54.13, 23.48], [53.97, 23.87], [53.47, 23.91], [52.75, 23.60],
+          [52.11, 23.19], [51.61, 24.15], [50.42, 24.10], [49.57, 22.86],
+          [49.20, 22.56], [49.00, 21.63], [49.18, 20.61], [49.40, 19.83],
+          [49.20, 18.97], [49.87, 18.56], [50.31, 18.67], [50.46, 17.87],
+          [50.32, 16.86], [50.66, 16.01], [51.13, 15.02], [51.46, 14.59],
+          [52.65, 14.61], [53.28, 14.24], [53.92, 14.22], [54.33, 16.31],
+          [54.44, 18.57]
+        ];
+        var first = true;
+        poland.forEach(function(latlng) {
+          var pt = map.latLngToContainerPoint(L.latLng(latlng[0], latlng[1]));
+          if (first) { ctx.moveTo(pt.x, pt.y); first = false; }
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    });
+
+    new CanvasMask().addTo(map);
+
+    // Custom orange icon
+    var orangeIcon = L.divIcon({
+      className: '',
+      html: '<div style="background:#FF6600;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(255,102,0,0.5);"></div>',
+      iconSize: [22, 22],
+      iconAnchor: [11, 22],
+      popupAnchor: [1, -22]
+    });
+
+    salony.forEach(function(s) {
+      var marker = L.marker([s.lat, s.lng], { icon: orangeIcon }).addTo(map);
+      marker.bindPopup(
+        '<div style="font-family:Nunito,sans-serif;min-width:180px;">' +
+        '<strong style="color:#FF6600;font-size:13px;">' + s.name + '</strong><br>' +
+        '<span style="font-size:12px;color:#555;">' + s.addr + '</span><br>' +
+        '<a href="https://maps.google.com/?q=' + encodeURIComponent(s.name + ' ' + s.addr) + '" target="_blank" ' +
+        'style="display:inline-block;margin-top:6px;background:#FF6600;color:white;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;">📍 Nawiguj</a>' +
+        '</div>'
+      );
+    });
+  }
+  </script>
+
+  <div class="plans-section-title" style="margin-top:1.5rem;">🏪 Przykładowe salony</div>
+  <div class="locations-list">
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Warszawa+Złote+Tarasy','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Złote Tarasy, Warszawa</div><div class="loc-addr">ul. Złota 59, 00-120 Warszawa · Pon–Sob 10:00–21:00</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Kraków+Galeria+Krakowska','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Galeria Krakowska, Kraków</div><div class="loc-addr">ul. Pawia 5, 31-154 Kraków · Pon–Sob 10:00–21:00</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Wrocław+Magnolia+Park','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Magnolia Park, Wrocław</div><div class="loc-addr">ul. Legnicka 58, 54-204 Wrocław · Pon–Sob 10:00–21:00</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Gdańsk+Forum','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Forum Gdańsk</div><div class="loc-addr">ul. Targ Sienny 7, 80-806 Gdańsk · Pon–Sob 10:00–21:00</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Poznan+Stary+Browar','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Stary Browar, Poznań</div><div class="loc-addr">ul. Półwiejska 42, 61-888 Poznań · Pon–Sob 10:00–21:00</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+salon+Leżajsk','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Leżajsk</div><div class="loc-addr">ul. Mickiewicza 33, 37-300 Leżajsk · Twoje miasto!</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Silesia+City+Center+Katowice','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Silesia City Center, Katowice</div><div class="loc-addr">ul. Chorzowska 107, 40-101 Katowice · Pon–Sob 10:00–21:00</div></div>
+    </div>
+    <div class="loc-card" onclick="window.open('https://maps.google.com/?q=Orange+Galaxy+Szczecin','_blank')">
+      <div class="loc-icon">🏪</div>
+      <div><div class="loc-name">Orange — Galaxy, Szczecin</div><div class="loc-addr">al. Wyzwolenia 18, 71-413 Szczecin · Pon–Sob 10:00–21:00</div></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:1rem 0;">
+    <a href="https://www.orange.pl/salony" target="_blank" style="display:inline-block;background:var(--orange);color:white;padding:12px 28px;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none;box-shadow:0 0 16px rgba(255,102,0,0.4);">🗺️ Znajdź salon w swoim mieście</a>
+  </div>
+
+  <div class="contact-block">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">💬</span><div><strong>Chat online</strong><br><a href="https://www.orange.pl" target="_blank">orange.pl</a> → ikona czatu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#9af1f5f4eefbf1eedaf5e8fbf4fdffb4eaf6"><span class="__cf_email__" data-cfemail="1b7074756f7a706f5b74697a757c7e356b77">[email&#160;protected]</span></a></div></div>
+    <div class="contact-row"><span class="contact-icon">📱</span><div><strong>Aplikacja Mój Orange</strong><br>Zarządzaj kontem przez aplikację mobilną</div></div>
+  </div>
+</section>
+
+
+<!-- STATYSTYKI -->
+<section id="stats" class="page-section">
+  <div class="section-title">📊 Orange w liczbach</div>
+  <p class="section-sub">Dane które robią wrażenie — kliknij żeby zobaczyć animację!</p>
+
+  <div class="visit-bar">
+    <div class="visit-dot"></div>
+    <span>Aktualnie online:</span>
+    <span class="visit-num" id="visit-count">2 847</span>
+    <span>osób odwiedza tę stronę</span>
+  </div>
+
+  <div class="counters-section" id="counters-wrap">
+    <div class="counter-card">
+      <div class="counter-icon">🌍</div>
+      <div class="counter-num" data-target="26" data-suffix="">0</div>
+      <div class="counter-label">Krajów na świecie</div>
+    </div>
+    <div class="counter-card">
+      <div class="counter-icon">👥</div>
+      <div class="counter-num" data-target="280" data-suffix="M+">0</div>
+      <div class="counter-label">Klientów globalnie</div>
+    </div>
+    <div class="counter-card">
+      <div class="counter-icon">🏪</div>
+      <div class="counter-num" data-target="800" data-suffix="+">0</div>
+      <div class="counter-label">Salonów w Polsce</div>
+    </div>
+    <div class="counter-card">
+      <div class="counter-icon">📺</div>
+      <div class="counter-num" data-target="200" data-suffix="+">0</div>
+      <div class="counter-label">Kanałów Orange TV</div>
+    </div>
+    <div class="counter-card">
+      <div class="counter-icon">🏫</div>
+      <div class="counter-num" data-target="400" data-suffix="+">0</div>
+      <div class="counter-label">Pracowni Orange</div>
+    </div>
+    <div class="counter-card">
+      <div class="counter-icon">📅</div>
+      <div class="counter-num" data-target="30" data-suffix=" lat">0</div>
+      <div class="counter-label">Doświadczenia</div>
+    </div>
+  </div>
+
+  <button class="speed-btn" onclick="animateCounters()">🔄 Animuj ponownie</button>
+
+  <div class="contact-block" style="margin-top:2rem;">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">💬</span><div><strong>Chat online</strong><br><a href="https://www.orange.pl" target="_blank">orange.pl</a> → ikona czatu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#cda6a2a3b9aca6b98da2bfaca3aaa8e3bda1"><span class="__cf_email__" data-cfemail="e3888c8d97828897a38c91828d8486cd938f">[email&#160;protected]</span></a></div></div>
+  </div>
+</section>
+
+<!-- 5G VS 4G -->
+<section id="porownaj" class="page-section">
+  <div class="section-title">⚡ 5G vs 4G</div>
+  <p class="section-sub">Zobacz jak wielka jest różnica — kliknij Start i patrz!</p>
+
+  <div style="background:var(--bg2);border-radius:22px;padding:1.5rem;border:1px solid var(--border);">
+    <div class="speed-section" id="speed-viz">
+      <div class="speed-row">
+        <div class="speed-label">
+          <span>📶 5G Orange <span style="color:var(--text3);font-size:11px;">do 20 Gbps</span></span>
+          <span id="lbl-5g">0 Mbps</span>
+        </div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill" id="bar-5g"></div></div>
+      </div>
+      <div class="speed-row">
+        <div class="speed-label">
+          <span>📡 4G LTE <span style="color:var(--text3);font-size:11px;">do 150 Mbps</span></span>
+          <span id="lbl-4g">0 Mbps</span>
+        </div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill" id="bar-4g" style="background:linear-gradient(90deg,#555,#888);box-shadow:none;"></div></div>
+      </div>
+      <div class="speed-row">
+        <div class="speed-label">
+          <span>📻 3G <span style="color:var(--text3);font-size:11px;">do 42 Mbps</span></span>
+          <span id="lbl-3g">0 Mbps</span>
+        </div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill" id="bar-3g" style="background:linear-gradient(90deg,#333,#555);box-shadow:none;"></div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.2rem 0;">
+      <div style="background:var(--bg3);border-radius:14px;padding:14px;border:1px solid var(--border-orange);">
+        <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">⚡ 5G potrafi</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+          🎬 Film 4K w <strong style="color:var(--orange)">2 sekundy</strong><br>
+          🎮 Gry online bez lagów<br>
+          🚗 Auta autonomiczne<br>
+          🏥 Operacje na odległość
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-radius:14px;padding:14px;border:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📡 4G potrafi</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+          🎬 Film 4K w <strong style="color:#888">8 minut</strong><br>
+          🎮 Gry online z lagami<br>
+          📱 Streaming wideo<br>
+          📞 Wideorozmowy
+        </div>
+      </div>
+    </div>
+
+    <button class="speed-btn" onclick="runSpeedTest()">▶ Uruchom symulację!</button>
+  </div>
+
+  <div class="contact-block" style="margin-top:2rem;">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#553e3a3b21343e21153a27343b32307b2539"><span class="__cf_email__" data-cfemail="385357564c59534c78574a59565f5d164854">[email&#160;protected]</span></a></div></div>
+  </div>
+</section>
+
+<!-- KALKULATOR / DOBIERZ PLAN -->
+<section id="kalkulator" class="page-section">
+  <div class="section-title">📱 Dobierz plan</div>
+  <p class="section-sub">Przesuń suwak i znajdź idealny plan Orange dla siebie!</p>
+
+  <div style="background:var(--bg2);border-radius:22px;padding:1.5rem;border:1px solid var(--border);">
+    <div class="plan-slider-wrap">
+      <div class="plan-slider-label">
+        Ile GB internetu potrzebujesz miesięcznie?
+        <span id="gb-val" style="color:var(--orange);font-family:'Baloo 2',cursive;font-size:18px;"> 5 GB</span>
+      </div>
+      <input type="range" class="plan-slider" id="gb-slider" min="1" max="100" value="5" oninput="updatePlan(this.value)">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px;">
+        <span>1 GB</span><span>25 GB</span><span>50 GB</span><span>100 GB</span>
+      </div>
+    </div>
+
+    <div class="plan-slider-wrap">
+      <div class="plan-slider-label">
+        Do czego głównie używasz telefonu?
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;" id="use-btns">
+        <button class="use-btn" onclick="selectUse(this,'social')" style="padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;">📱 Social media</button>
+        <button class="use-btn" onclick="selectUse(this,'video')" style="padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;">🎬 Streaming wideo</button>
+        <button class="use-btn" onclick="selectUse(this,'games')" style="padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;">🎮 Gry online</button>
+        <button class="use-btn" onclick="selectUse(this,'work')" style="padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;">💼 Praca / nauka</button>
+      </div>
+    </div>
+
+    <div class="plan-result" id="plan-result">
+      <div class="plan-result-name" id="plan-name">Orange S</div>
+      <div class="plan-result-desc" id="plan-desc">Idealny na start — social media, mapy i komunikatory bez limitu.</div>
+      <div class="plan-badge" id="plan-badge">od 35 zł/mies.</div>
+    </div>
+  </div>
+
+  <div class="contact-block" style="margin-top:2rem;">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia</strong><br><a href="tel:+48601000600">601 000 600</a> (czynna całą dobę)</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salony Orange</strong><br>Ponad 800 salonów w całej Polsce</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#771c181903161c033718051619101259071b"><span class="__cf_email__" data-cfemail="264d494852474d526649544748414308564a">[email&#160;protected]</span></a></div></div>
+  </div>
+</section>
+
+
+<!-- SENIORZY -->
+<section id="seniorzy" class="page-section">
+
+  <div class="senior-font-toggle">
+    <span style="font-size:14px;color:var(--text3);font-weight:700;">Rozmiar tekstu:</span>
+    <button class="sfont-btn active" onclick="setSeniorFont('normal', this)">A</button>
+    <button class="sfont-btn" onclick="setSeniorFont('big', this)" style="font-size:20px;">A</button>
+  </div>
+
+  <div class="senior-hero">
+    <div class="senior-hero-icon">👴👵</div>
+    <div class="senior-hero-title">Orange dla Seniorów</div>
+    <div class="senior-hero-sub">
+      Proste telefony, przystępne ceny i pomoc na każdym kroku.<br>
+      Orange dba o to, żeby każdy — bez względu na wiek — był zawsze w kontakcie z bliskimi.
+    </div>
+  </div>
+
+  <div class="section-title" style="font-size:22px;">📦 Oferty dla Seniorów</div>
+  <p class="section-sub">Specjalne plany dopasowane do potrzeb osób starszych</p>
+
+  <div class="senior-card">
+    <div class="senior-card-header">
+      <div class="senior-card-icon">📞</div>
+      <div>
+        <div class="senior-card-title">Orange Senior S</div>
+        <div class="senior-card-price">od 19 zł miesięcznie</div>
+      </div>
+    </div>
+    <ul class="senior-card-desc">
+      <li>Nielimitowane rozmowy do wszystkich w Polsce</li>
+      <li>100 SMS-ów miesięcznie</li>
+      <li>1 GB internetu na telefonie</li>
+      <li>Bezpłatne połączenia na numer alarmowy 112</li>
+      <li>Brak ukrytych opłat — płacisz tylko tyle ile wiesz</li>
+    </ul>
+  </div>
+
+  <div class="senior-card">
+    <div class="senior-card-header">
+      <div class="senior-card-icon">❤️</div>
+      <div>
+        <div class="senior-card-title">Orange Senior M</div>
+        <div class="senior-card-price">od 29 zł miesięcznie</div>
+      </div>
+    </div>
+    <ul class="senior-card-desc">
+      <li>Nielimitowane rozmowy i SMS-y do wszystkich</li>
+      <li>5 GB internetu — zdjęcia, wiadomości, mapy</li>
+      <li>Darmowe rozmowy do rodziny za granicą (UE)</li>
+      <li>Pomoc techniczna przez telefon — bez kolejki</li>
+      <li>Możliwość zawieszenia konta na czas choroby</li>
+    </ul>
+  </div>
+
+  <div class="senior-card">
+    <div class="senior-card-header">
+      <div class="senior-card-icon">🌟</div>
+      <div>
+        <div class="senior-card-title">Orange Senior MAX</div>
+        <div class="senior-card-price">od 39 zł miesięcznie</div>
+      </div>
+    </div>
+    <ul class="senior-card-desc">
+      <li>Wszystko nielimitowane — rozmowy, SMS-y, internet</li>
+      <li>20 GB internetu — filmy, zdjęcia, wideorozmowy</li>
+      <li>Aplikacja „Mój Orange" w wersji uproszczonej</li>
+      <li>Priorytetowa obsługa w każdym salonie Orange</li>
+      <li>Bezpłatne ubezpieczenie telefonu przez 3 miesiące</li>
+    </ul>
+  </div>
+
+  <div class="section-title" style="font-size:22px;margin-top:1.5rem;">💡 Przydatne wskazówki</div>
+
+  <div class="senior-tip">
+    <strong>📱 Jak dzwonić po pomoc?</strong><br>
+    W każdym telefonie — nawet bez karty SIM — możesz zadzwonić na numer <strong>112</strong>. To bezpłatny numer alarmowy czynny całą dobę.
+  </div>
+
+  <div class="senior-tip">
+    <strong>🔋 Jak oszczędzać baterię?</strong><br>
+    Zmniejsz jasność ekranu, wyłącz Wi-Fi i Bluetooth gdy ich nie używasz. Bateria wytrzyma wtedy nawet dwa razy dłużej!
+  </div>
+
+  <div class="senior-tip">
+    <strong>📸 Jak wysłać zdjęcie wnukowi?</strong><br>
+    Zrób zdjęcie, naciśnij „Udostępnij", wybierz „WhatsApp" lub „Wiadomości" i wybierz kontakt. Proste jak 1-2-3!
+  </div>
+
+  <div class="senior-tip">
+    <strong>🛡️ Uważaj na oszustów!</strong><br>
+    Orange <strong>nigdy</strong> nie prosi przez telefon o podanie numeru PIN, hasła ani danych karty bankowej. Jeśli ktoś pyta — rozłącz się i zadzwoń na <strong>601 000 600</strong>.
+  </div>
+
+  <div class="senior-emergency">
+    <div class="senior-emergency-title">🆘 Ważne numery telefonu</div>
+    <a href="tel:112" class="senior-call-btn">🚨 112 — Pogotowie</a>
+    <a href="tel:601000600" class="senior-call-btn orange-btn">📞 601 000 600 — Orange Pomoc</a>
+    <a href="tel:116123" class="senior-call-btn" style="background:#4b5563;">💬 116 123 — Telefon Zaufania</a>
+    <p style="margin-top:14px;font-size:14px;color:var(--text3);">Zapisz te numery w telefonie na wypadek potrzeby!</p>
+  </div>
+
+  <div class="contact-block" style="margin-top:2rem;">
+    <h3>📞 Kontakt Orange</h3>
+    <div class="contact-row"><span class="contact-icon">📞</span><div><strong>Infolinia Orange</strong><br><a href="tel:+48601000600">601 000 600</a> — czynna całą dobę, 7 dni w tygodniu</div></div>
+    <div class="contact-row"><span class="contact-icon">🏪</span><div><strong>Salon Orange</strong><br>Ponad 800 salonów w Polsce — pracownicy chętnie pomogą!</div></div>
+    <div class="contact-row"><span class="contact-icon">✉️</span><div><strong>E-mail</strong><br><a href="/cdn-cgi/l/email-protection#b1dadedfc5d0dac5f1dec3d0dfd6d49fc1dd"><span class="__cf_email__" data-cfemail="1e7571706a7f756a5e716c7f70797b306e72">[email&#160;protected]</span></a></div></div>
+  </div>
+
+</section>
+
+<footer>
+  Projekt szkolny · Partner: <strong>Orange Polska</strong> 🧡 · Zrobiony z pasją do technologii
+</footer>
+<script>
+
+// === NAWIGACJA ===
+function showSection(id, btn) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  var nav = document.getElementById('main-nav');
+  if (nav) window.scrollTo({ top: nav.getBoundingClientRect().top + window.scrollY - 10, behavior: 'smooth' });
+  btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  if (id === 'mapa') setTimeout(initOrangeMap, 50);
+  if (id === 'stats') { setTimeout(animateCounters, 300); startVisitCounter(); }
+  if (id === 'porownaj') setTimeout(runSpeedTest, 400);
+}
+
+function scrollNav(dir) {
+  var nav = document.getElementById('main-nav');
+  if (nav) nav.scrollBy({ left: dir * 160, behavior: 'smooth' });
+}
+
+// === CIEKAWOSTKI ===
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.fact-card').forEach(function(card) {
+    card.addEventListener('click', function(e) { this.classList.toggle('open'); });
+    card.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      this.classList.toggle('open');
+    }, { passive: false });
+  });
+});
+
+// === THEME TOGGLE ===
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  var btn = document.getElementById('theme-toggle');
+  btn.textContent = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
+  localStorage.setItem('orangeTheme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+}
+(function() {
+  if (localStorage.getItem('orangeTheme') === 'light') {
+    document.body.classList.add('light-mode');
+    var btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = '☀️';
+  }
+})();
+
+// === ANIMATED COUNTERS ===
+function animateCounters() {
+  document.querySelectorAll('.counter-num').forEach(function(el) {
+    var target = parseInt(el.dataset.target);
+    var suffix = el.dataset.suffix || '';
+    var current = 0;
+    var step = Math.max(1, Math.floor(target / 60));
+    var interval = setInterval(function() {
+      current = Math.min(current + step, target);
+      el.textContent = current + suffix;
+      if (current >= target) clearInterval(interval);
+    }, 25);
+  });
+}
+
+// === VISIT COUNTER ===
+function startVisitCounter() {
+  var el = document.getElementById('visit-count');
+  if (!el) return;
+  var base = 2800 + Math.floor(Math.random() * 200);
+  el.textContent = base.toLocaleString('pl-PL');
+  setInterval(function() {
+    base += Math.random() < 0.5 ? 1 : (Math.random() < 0.3 ? -1 : 0);
+    el.textContent = base.toLocaleString('pl-PL');
+  }, 2000);
+}
+
+// === SPEED TEST ===
+function runSpeedTest() {
+  var bars = [
+    { id: 'bar-5g', lbl: 'lbl-5g', max: 100, speed: 1200, unit: 'Mbps' },
+    { id: 'bar-4g', lbl: 'lbl-4g', max: 12,  speed: 150,  unit: 'Mbps' },
+    { id: 'bar-3g', lbl: 'lbl-3g', max: 4,   speed: 42,   unit: 'Mbps' },
+  ];
+  bars.forEach(function(b) {
+    document.getElementById(b.id).style.width = '0%';
+    document.getElementById(b.lbl).textContent = '0 ' + b.unit;
+  });
+  setTimeout(function() {
+    bars.forEach(function(b, i) {
+      setTimeout(function() {
+        document.getElementById(b.id).style.width = b.max + '%';
+        var cur = 0;
+        var iv = setInterval(function() {
+          cur = Math.min(cur + Math.ceil(b.speed / 40), b.speed);
+          document.getElementById(b.lbl).textContent = cur + ' ' + b.unit;
+          if (cur >= b.speed) clearInterval(iv);
+        }, 35);
+      }, i * 200);
+    });
+  }, 100);
+}
+
+// === PLAN CALCULATOR ===
+var plans = [
+  { min: 1,  max: 5,   name: 'Orange S',       desc: 'Idealny na start — social media, mapy i komunikatory. Połączenia i SMS bez limitu w Polsce.',  price: 'od 35 zł/mies.', emoji: '📱' },
+  { min: 6,  max: 15,  name: 'Orange M',        desc: 'Dobry wybór dla aktywnych użytkowników — streaming muzyki, nawigacja, Instagram bez stresu.', price: 'od 49 zł/mies.', emoji: '📲' },
+  { min: 16, max: 30,  name: 'Orange L',        desc: 'Dla fanów YouTube i TikToka — oglądaj w HD bez ograniczeń, hot-spot dla znajomych.',           price: 'od 59 zł/mies.', emoji: '🎬' },
+  { min: 31, max: 60,  name: 'Orange XL',       desc: 'Grasz online? Oglądasz 4K? Ten plan jest dla Ciebie — szybko, dużo, bez kompromisów.',         price: 'od 79 zł/mies.', emoji: '🎮' },
+  { min: 61, max: 100, name: 'Orange MAX 5G',   desc: 'Absolutna pełnia — nielimitowany internet 5G, wszystkie usługi, praca i rozrywka bez limitu!', price: 'od 99 zł/mies.', emoji: '🚀' },
+];
+function updatePlan(val) {
+  var gb = parseInt(val);
+  document.getElementById('gb-val').textContent = ' ' + gb + ' GB';
+  var plan = plans.find(function(p) { return gb >= p.min && gb <= p.max; }) || plans[plans.length-1];
+  document.getElementById('plan-name').textContent = plan.emoji + ' ' + plan.name;
+  document.getElementById('plan-desc').textContent = plan.desc;
+  document.getElementById('plan-badge').textContent = plan.price;
+}
+function selectUse(btn, type) {
+  document.querySelectorAll('.use-btn').forEach(function(b) {
+    b.style.background = 'var(--bg3)';
+    b.style.color = 'var(--text2)';
+    b.style.borderColor = 'var(--border)';
+  });
+  btn.style.background = 'var(--orange)';
+  btn.style.color = 'white';
+  btn.style.borderColor = 'var(--orange)';
+}
+
+// === SENIOR FONT ===
+function setSeniorFont(size, btn) {
+  var section = document.getElementById('seniorzy');
+  document.querySelectorAll('.sfont-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  if (size === 'big') section.classList.add('big-font');
+  else section.classList.remove('big-font');
+}
+
+</script>
+</body>
+</html>
